@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: kafka
+  labels:
+    app: kafka
+spec:
+  selector:
+    matchLabels:
+      app: kafka
+  serviceName: "kafka"
+  replicas: 1   # shouldn't change this
+  template:
+    metadata:
+      labels:
+        app: kafka
+    spec:
+      terminationGracePeriodSeconds: 10
+      containers:
+      - env:
+        - name: KAFKA_ADVERTISED_LISTENERS
+          # replace 'default' with the corresponding namespace if this deployed elsewhere than default
+          value: PLAINTEXT://kafka-0.kafka.default.svc.cluster.local:9092        
+        - name: KAFKA_BROKER_ID
+          value: "1"
+        - name: KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR
+          value: "1"
+        - name: KAFKA_ZOOKEEPER_CONNECT
+          value: zookeeper:32181
+        image: confluentinc/cp-kafka:5.3.1
+        name: kafka
+        ports:
+        - containerPort: 9092
+        resources: {}
+      restartPolicy: Always
+      # don't publish environment variables with port information so that the confluent scripts don't get confused
+      enableServiceLinks: false
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kafka
+  labels:
+    app: kafka
+spec:
+  selector:
+    app: kafka
+  ports:
+  - name: "9092"
+    port: 9092
+    targetPort: 9092

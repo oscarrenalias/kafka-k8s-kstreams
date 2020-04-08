@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: ksql
+  name: ksql
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ksql
+  strategy: {}
+  template:
+    metadata:
+      labels:
+        app: ksql
+    spec:
+      containers:
+      - env:
+        - name: KSQL_BOOTSTRAP_SERVERS
+          value: kafka:9092
+        - name: KSQL_LISTENERS
+          value: "http://0.0.0.0:8088"
+        - name: KSQL_KSQL_SERVICE_ID
+          value: ksql_service_2_
+        image: confluentinc/cp-ksql-server:5.4.0
+        name: ksql
+        resources: {}
+      restartPolicy: Always
+      # don't publish environment variables with port information so that the confluent scripts don't get confused
+      enableServiceLinks: false
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: ksql
+  name: ksql
+spec:
+  ports:
+  - name: "8088"
+    port: 8088
+    targetPort: 8088
+  selector:
+    app: ksql
+status:
+  loadBalancer: {}
